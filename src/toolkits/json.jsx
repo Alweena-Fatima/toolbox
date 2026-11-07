@@ -7,6 +7,7 @@ const S = '{"name":"Toolbox","tags":["cute","free"],"version":1}'
 
 const diff = (a, b, p = '$') => {
   if (a && b && typeof a === 'object' && typeof b === 'object') {
+    // Visit the union of keys so the comparison catches additions and removals.
     return [...new Set([...Object.keys(a), ...Object.keys(b)])].flatMap(k =>
       !(k in b)
         ? [`- ${p}.${k} removed`]
@@ -36,10 +37,12 @@ export const json = {
         <TextTool
           file="formatted.json"
           sample={[S]}
-          modes={[{
-            label: 'Format',
-            run: ([s]) => JSON.stringify(JSON.parse(s), null, 2)
-          }]}
+          modes={[
+            {
+              label: 'Format',
+              run: ([s]) => JSON.stringify(JSON.parse(s), null, 2)
+            }
+          ]}
         />
       )
     },
@@ -50,13 +53,20 @@ export const json = {
       component: () => (
         <TextTool
           sample={[S]}
-          modes={[{
-            label: 'Validate',
-            run: ([s]) => {
-              const j = JSON.parse(s)
-              return `✓ Valid JSON (${typeof j === 'object' && j ? Object.keys(j).length + ' top-level keys' : typeof j})`
+          modes={[
+            {
+              label: 'Validate',
+              run: ([s]) => {
+                const value = JSON.parse(s)
+                const description =
+                  typeof value === 'object' && value
+                    ? `${Object.keys(value).length} top-level keys`
+                    : typeof value
+
+                return `✓ Valid JSON (${description})`
+              }
             }
-          }]}
+          ]}
         />
       )
     },
@@ -68,10 +78,12 @@ export const json = {
         <TextTool
           file="min.json"
           sample={['{\n  "a": 1,\n  "b": [1, 2]\n}']}
-          modes={[{
-            label: 'Minify',
-            run: ([s]) => JSON.stringify(JSON.parse(s))
-          }]}
+          modes={[
+            {
+              label: 'Minify',
+              run: ([s]) => JSON.stringify(JSON.parse(s))
+            }
+          ]}
         />
       )
     },
@@ -83,10 +95,14 @@ export const json = {
         <TextTool
           fields={['Original JSON', 'Changed JSON']}
           sample={['{"a":1,"b":2}', '{"a":1,"b":3,"c":4}']}
-          modes={[{
-            label: 'Compare',
-            run: ([a, b]) => diff(JSON.parse(a), JSON.parse(b)).join('\n') || '✓ Both are identical'
-          }]}
+          modes={[
+            {
+              label: 'Compare',
+              run: ([a, b]) =>
+                diff(JSON.parse(a), JSON.parse(b)).join('\n') ||
+                '✓ Both are identical'
+            }
+          ]}
         />
       )
     }
