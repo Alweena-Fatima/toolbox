@@ -5,7 +5,8 @@
 import { Wrench } from 'lucide-react'
 import TextTool from '../components/TextTool'
 
-const b64d = (s) =>
+const b64d = s =>
+  // Base64URL uses URL-safe characters; convert them before browser decoding.
   new TextDecoder().decode(
     Uint8Array.from(
       atob(s.trim().replace(/-/g, '+').replace(/_/g, '/')),
@@ -66,6 +67,7 @@ export const developer = {
             {
               label: 'Encode',
               run: ([s]) =>
+                // btoa expects a byte string, so encode Unicode text as UTF-8 first.
                 btoa(
                   String.fromCharCode(
                     ...new TextEncoder().encode(s)
@@ -117,6 +119,7 @@ export const developer = {
               run: ([s]) => {
                 const p = s.trim().split('.')
 
+                // JWT payload decoding reveals contents but does not verify its signature.
                 if (p.length < 2) {
                   throw new Error(
                     'A JWT has 3 parts separated by dots.'
