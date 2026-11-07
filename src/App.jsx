@@ -9,6 +9,7 @@ import {
 import { ArrowLeft, Search, Star } from 'lucide-react'
 import Header from './components/Header'
 import ToolCard from './components/ToolCard'
+import { Pegboard } from './components/Workshop'
 import { toolkits } from './data/toolkits'
 
 function getAllTools() {
@@ -87,22 +88,16 @@ function ToolList({ tools }) {
 function ToolkitGrid({ items }) {
   return (
     <div className="grid">
-      {items.map(toolkit => {
-        const toolCountLabel = toolkit.tools.length === 1 ? 'tool' : 'tools'
-
-        return (
-          <ToolCard
-            key={toolkit.id}
-            to={`/kit/${toolkit.id}`}
-            title={toolkit.name}
-            description={toolkit.desc}
-            color={toolkit.color}
-            icon={toolkit.icon}
-            iconSize={36}
-            footer={`${toolkit.tools.length} ${toolCountLabel} · open drawer`}
-          />
-        )
-      })}
+      {items.map((toolkit, index) => (
+        <ToolCard
+          key={toolkit.id}
+          to={`/kit/${toolkit.id}`}
+          index={index}
+          title={toolkit.name}
+          description={toolkit.desc}
+          tags={toolkit.tools.map(tool => tool.name)}
+        />
+      ))}
     </div>
   )
 }
@@ -130,24 +125,29 @@ function HomePage() {
   return (
     <>
       <section className="hero">
-        <h1>
-          Every little job
-          <br />
-          has a little tool.
-        </h1>
-        <p>
-          Free, private tools that run right in your browser. No sign-up,
-          nothing uploaded.
-        </p>
-        <label className="search">
-          <Search size={20} />
-          <input
-            placeholder="Find your tool…"
-            value={query}
-            onChange={handleSearchChange}
-            aria-label="Search tools"
-          />
-        </label>
+        <div className="hero-text">
+          <span className="shop-tag">{allTools.length} tools on the wall</span>
+          <h1>
+            Every little job
+            <br />
+            has a <mark>little tool.</mark>
+          </h1>
+          <p>
+            Free, private tools that run right in your browser. No sign-up,
+            nothing uploaded.
+          </p>
+          <label className="search">
+            <Search size={20} />
+            <input
+              placeholder="Grab a tool…"
+              value={query}
+              onChange={handleSearchChange}
+              aria-label="Search tools"
+            />
+          </label>
+        </div>
+
+        <Pegboard />
       </section>
 
       {query ? (
@@ -211,14 +211,13 @@ function ToolkitPage() {
       <h1>{toolkit.name}</h1>
       <p>{toolkit.desc}</p>
       <div className="grid">
-        {toolkit.tools.map(tool => (
+        {toolkit.tools.map((tool, index) => (
           <ToolCard
             key={tool.id}
             to={`/tool/${toolkit.id}/${tool.id}`}
+            index={index}
             title={tool.name}
             description={tool.desc}
-            color={toolkit.color}
-            icon={toolkit.icon}
           />
         ))}
       </div>
