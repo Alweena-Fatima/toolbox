@@ -1,14 +1,19 @@
-// Build topics: QR-code encoding, URL/text and Wi-Fi payload formats,
-// React state/effects, async generation, data URLs, SVG/PNG downloads,
-// and accessible form controls.
 import { useEffect, useState } from 'react'
-import { QrCode, Download } from 'lucide-react'
-import QRCode from 'qrcode'
+import { Download, QrCode } from 'lucide-react'
+import { generateQrFiles } from './qrUtils'
+
+function getErrorMessage(error) {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return String(error)
+}
 
 function QrTool() {
   const [kind, setKind] = useState('url')
   const [text, setText] = useState('https://example.com')
-  const [ssid, setSsid] = useState('')
+  const [networkName, setNetworkName] = useState('')
   const [password, setPassword] = useState('')
   const [foreground, setForeground] = useState('#3b2f2f')
   const [background, setBackground] = useState('#ffffff')
@@ -16,45 +21,78 @@ function QrTool() {
   const [svg, setSvg] = useState('')
   const [error, setError] = useState('')
 
-  // Wi-Fi QR payloads follow the WIFI: format; other types encode the given text.
-  const data = kind === 'wifi'
-    ? `WIFI:T:WPA;S:${ssid};P:${password};;`
-    : text
+  let data = text
+  if (kind === 'wifi') {
+    // Wi-Fi QR readers recognize this payload format.
+    data = `WIFI:T:WPA;S:${networkName};P:${password};;`
+  }
 
   useEffect(() => {
-    if (!data.trim() || (kind === 'wifi' && !ssid)) {
-      setPng('')
-      return
-    }
+    let isCurrentRequest = true
 
-    const options = {
-      color: { dark: foreground, light: background },
-      margin: 2,
-      width: 360
-    }
-
-    // Generate both download formats together so their preview data stays in sync.
-    Promise.all([
-      QRCode.toDataURL(data, options),
-      QRCode.toString(data, { ...options, type: 'svg' })
-    ])
-      .then(([pngData, svgData]) => {
-        setPng(pngData)
-        setSvg(svgData)
+    async function updateQrCode() {
+      if (!data.trim() || (kind === 'wifi' && !networkName)) {
+        setPng('')
+        setSvg('')
         setError('')
-      })
-      .catch(generationError => setError(generationError.message))
-  }, [data, foreground, background, kind, ssid])
+        return
+      }
+
+      try {
+        const files = await generateQrFiles(data, foreground, background)
+
+        if (isCurrentRequest) {
+          setPng(files.png)
+          setSvg(files.svg)
+          setError('')
+        }
+      } catch (generationError) {
+        if (isCurrentRequest) {
+          setPng('')
+          setSvg('')
+          setError(getErrorMessage(generationError))
+        }
+      }
+    }
+
+    updateQrCode()
+
+    // Ignore an old response if the user has already changed the input.
+    return () => {
+      isCurrentRequest = false
+    }
+  }, [data, foreground, background, kind, networkName])
+
+  function handleKindChange(event) {
+    setKind(event.target.value)
+  }
+
+  function handleTextChange(event) {
+    setText(event.target.value)
+  }
+
+  function handleNetworkNameChange(event) {
+    setNetworkName(event.target.value)
+  }
+
+  function handlePasswordChange(event) {
+    setPassword(event.target.value)
+  }
+
+  function handleForegroundChange(event) {
+    setForeground(event.target.value)
+  }
+
+  function handleBackgroundChange(event) {
+    setBackground(event.target.value)
+  }
 
   return (
     <div className="work">
       <div className="col">
         <label className="field">
           <span>Type</span>
-          <select
-            value={kind}
-            onChange={event => setKind(event.target.value)}
-          >
+          <select value={kind} onChange={handleKindChange}>
             <option value="url">URL</option>
             <option value="text">Text</option>
             <option value="wifi">Wi-Fi</option>
@@ -66,16 +104,13 @@ function QrTool() {
             <label className="field">
               <span>Network name</span>
               <input
-                value={ssid}
-                onChange={event => setSsid(event.target.value)}
+                value={networkName}
+                onChange={handleNetworkNameChange}
               />
             </label>
             <label className="field">
               <span>Password</span>
-              <input
-                value={password}
-                onChange={event => setPassword(event.target.value)}
-              />
+              <input value={password} onChange={handlePasswordChange} />
             </label>
           </>
         ) : (
@@ -84,7 +119,7 @@ function QrTool() {
             <textarea
               rows={4}
               value={text}
-              onChange={event => setText(event.target.value)}
+              onChange={handleTextChange}
             />
           </label>
         )}
@@ -95,7 +130,7 @@ function QrTool() {
             <input
               type="color"
               value={foreground}
-              onChange={event => setForeground(event.target.value)}
+              onChange={handleForegroundChange}
             />
           </label>
           <label className="field">
@@ -103,7 +138,7 @@ function QrTool() {
             <input
               type="color"
               value={background}
-              onChange={event => setBackground(event.target.value)}
+              onChange={handleBackgroundChange}
             />
           </label>
         </div>
@@ -112,7 +147,9 @@ function QrTool() {
       <div className="col">
         <span className="lbl">Preview</span>
         {error ? (
-          <div className="err">⚠ {error}</div>
+          <div className="err" role="alert">
+            ⚠ {error}
+          </div>
         ) : png ? (
           <>
             <img src={png} alt="QR code" className="qr" />
