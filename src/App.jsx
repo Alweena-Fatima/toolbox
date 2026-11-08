@@ -105,7 +105,6 @@ function ToolkitGrid({ items }) {
 function HomePage() {
   const [query, setQuery] = useState('')
   const [favourites] = useLocalStorage('fav')
-  const [recentTools] = useLocalStorage('rec')
   const matchingTools = []
   const normalizedQuery = query.toLowerCase()
 
@@ -170,13 +169,6 @@ function HomePage() {
             <section>
               <h2>Favourites</h2>
               <ToolList tools={getToolsByKeys(favourites)} />
-            </section>
-          )}
-
-          {recentTools.length > 0 && (
-            <section>
-              <h2>Recently used</h2>
-              <ToolList tools={getToolsByKeys(recentTools)} />
             </section>
           )}
 

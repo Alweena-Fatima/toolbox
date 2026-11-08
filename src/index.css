@@ -27,7 +27,7 @@
     #f5b414 0 8px,
     #1d1f21 8px 16px
   );
-  --screwdriver-cursor: url('./assets/screwdriver-cursor.svg') 40 40, auto;
+  --screwdriver-cursor: url('./assets/screwdriver-cursor.svg') 100  40, auto;
 }
 
 * {
