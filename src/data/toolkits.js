@@ -8,11 +8,13 @@ import { image } from '../toolkits/image/ImageToolkit'
 
 // Keep toolkit registration here so the app has one clear source of toolkit data.
 export const toolkits = [
-  json,
+  
   developer,
   sql,
+  markdown,
+  image,
+  json,
   csv,
   qr,
-  markdown,
-  image
+  
 ]

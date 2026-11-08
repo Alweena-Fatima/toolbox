@@ -27,10 +27,12 @@
     #f5b414 0 8px,
     #1d1f21 8px 16px
   );
+  --screwdriver-cursor: url('./assets/screwdriver-cursor.svg') 40 40, auto;
 }
 
 * {
   box-sizing: border-box;
+  cursor: var(--screwdriver-cursor);
 }
 
 body {
@@ -455,9 +457,9 @@ mark::after {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  min-height: 400px;
-  padding: 48px 24px 24px;
+  gap: 10px;
+  min-height: 320px;
+  padding: 42px 20px 20px;
   overflow: hidden;
   color: var(--card-fg);
   text-decoration: none;
@@ -523,8 +525,8 @@ mark::after {
   right: 12px;
   bottom: 10px;
   z-index: 0 !important;
-  width: 140px;
-  height: 140px;
+  width: 110px;
+  height: 110px;
   pointer-events: none;
   --steel-fill: rgba(255, 255, 255, 0.75);
   --steel-dark: rgba(0, 0, 0, 0.3);
@@ -587,8 +589,8 @@ mark::after {
 .card-arrow {
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
+  width: 46px;
+  height: 46px;
   margin-left: auto;
   color: #1d1f21;
   background: linear-gradient(#ffffff, #aab2b8);
@@ -609,7 +611,7 @@ mark::after {
 }
 
 .card h3 {
-  margin-top: 16px;
+  margin-top: 8px;
   font-size: clamp(1.5rem, 2.6vw, 1.9rem);
 }
 
@@ -630,17 +632,17 @@ mark::after {
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .tag {
-  padding: 5px 12px;
+  padding: 4px 9px;
   background: rgba(255, 255, 255, 0.28);
   border: 2px solid rgba(0, 0, 0, 0.25);
   border-radius: 999px;
   font-family: var(--mono);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   text-transform: uppercase;
 }
 
@@ -687,7 +689,7 @@ mark::after {
   border-radius: 10px;
   background: var(--panel);
   color: var(--ink);
-  cursor: pointer;
+  cursor: var(--screwdriver-cursor);
   text-decoration: none;
   box-shadow: 0 4px 0 var(--steel);
   transition: translate 0.1s, box-shadow 0.1s;
@@ -714,7 +716,7 @@ mark::after {
 
 .btn:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
+  cursor: var(--screwdriver-cursor);
 }
 
 :focus-visible {
@@ -846,7 +848,7 @@ input[type='file']::file-selector-button {
   border-radius: 8px;
   background: var(--pop);
   color: var(--ink);
-  cursor: pointer;
+  cursor: var(--screwdriver-cursor);
 }
 
 /* ---------- About ---------- */
