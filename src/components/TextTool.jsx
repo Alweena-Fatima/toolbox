@@ -1,142 +1,173 @@
-
 import { useState } from 'react'
-import { Copy, Download, Eraser, FlaskConical, Check } from 'lucide-react'
+import { Eraser, FlaskConical } from 'lucide-react'
+import OutputPanel from './OutputPanel'
+
+function getErrorMessage(error) {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return String(error)
+}
 
 export default function TextTool({
   fields = ['Input'],
-  modes,
+  file = 'output.txt',
   sample,
-  file = 'output.txt'
+  onConvert,
+  buttonLabel = 'Convert',
+  actions = []
 }) {
-  const [v, setV] = useState(fields.map(() => ''))
-  const [out, setOut] = useState('')
-  const [err, setErr] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [ok, setOk] = useState(false)
+  const [inputs, setInputs] = useState(() => fields.map(() => ''))
+  const [output, setOutput] = useState('')
+  const [error, setError] = useState('')
+  const [isBusy, setIsBusy] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
 
-  const go = async (m) => {
-    setBusy(true)
+  let availableActions = actions
+  if (actions.length === 0) {
+    availableActions = [{ label: buttonLabel, onConvert }]
+  }
+
+  async function handleConvert(convertFunction) {
+    if (typeof convertFunction !== 'function') {
+      setError('This tool does not have a conversion function.')
+      return
+    }
+
+    setIsBusy(true)
+    setError('')
+
     try {
-      setOut(await m.run(v))
-      setErr('')
-    } catch (e) {
-      setOut('')
-      setErr(e?.message || String(e))
+      const result = await convertFunction(inputs)
+      setOutput(result == null ? '' : String(result))
+    } catch (conversionError) {
+      setOutput('')
+      setError(getErrorMessage(conversionError))
+    } finally {
+      setIsBusy(false)
     }
-    setBusy(false)
   }
 
-  const copy = async () => {
-    await navigator.clipboard.writeText(out)
-    setOk(true)
-    setTimeout(() => setOk(false), 1200)
-  }
-
-  const save = () => {
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([out]))
-    a.download = file
-    a.click()
-  }
-
-  const upload = (i, f) => {
-    if (f) {
-      f.text().then(t =>
-        setV(v.map((x, j) => j === i ? t : x))
-      )
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(output)
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 1200)
+    } catch (copyError) {
+      setError(getErrorMessage(copyError))
     }
+  }
+
+  function handleDownload() {
+    const blob = new Blob([output])
+    const downloadUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+
+    link.href = downloadUrl
+    link.download = file
+    link.click()
+
+    // Release the temporary browser URL after the download has started.
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000)
+  }
+
+  function handleInputChange(inputIndex, value) {
+    const updatedInputs = inputs.slice()
+    updatedInputs[inputIndex] = value
+    setInputs(updatedInputs)
+  }
+
+  async function handleFileChange(inputIndex, event) {
+    const selectedFile = event.target.files?.[0]
+
+    if (!selectedFile) {
+      return
+    }
+
+    try {
+      const fileText = await selectedFile.text()
+      handleInputChange(inputIndex, fileText)
+      setError('')
+    } catch (fileError) {
+      setError(getErrorMessage(fileError))
+    }
+  }
+
+  function handleLoadSample() {
+    const sampleInputs = []
+
+    for (let index = 0; index < fields.length; index++) {
+      sampleInputs.push(sample[index] || '')
+    }
+
+    setInputs(sampleInputs)
+    setOutput('')
+    setError('')
+  }
+
+  function handleClear() {
+    setInputs(fields.map(() => ''))
+    setOutput('')
+    setError('')
+    setIsCopied(false)
   }
 
   return (
     <div className="work">
       <div className="col">
-        {fields.map((f, i) => (
-          <label key={i} className="field">
-            <span>{f}</span>
-
+        {fields.map((field, index) => (
+          <label key={field} className="field">
+            <span>{field}</span>
             <textarea
               rows={fields.length > 1 ? 6 : 14}
-              value={v[i]}
+              value={inputs[index]}
               spellCheck={false}
-              onChange={e =>
-                setV(v.map((x, j) =>
-                  j === i ? e.target.value : x
-                ))
+              onChange={event =>
+                handleInputChange(index, event.target.value)
               }
             />
-
             <input
               type="file"
-              aria-label={`Load file into ${f}`}
-              onChange={e => upload(i, e.target.files?.[0])}
+              aria-label={`Load file into ${field}`}
+              onChange={event => handleFileChange(index, event)}
             />
           </label>
         ))}
 
         <div className="row">
-          {modes.map(m => (
+          {availableActions.map(action => (
             <button
-              key={m.label}
+              key={action.label}
               className="btn main"
-              onClick={() => go(m)}
-              disabled={busy}
+              onClick={() => handleConvert(action.onConvert)}
+              disabled={isBusy}
             >
-              {m.label}
+              {action.label}
             </button>
           ))}
 
           {sample && (
-            <button className="btn" onClick={() => setV(sample)}>
+            <button className="btn" onClick={handleLoadSample}>
               <FlaskConical size={16} />
               Sample
             </button>
           )}
 
-          <button
-            className="btn"
-            onClick={() => {
-              setV(fields.map(() => ''))
-              setOut('')
-              setErr('')
-            }}
-          >
+          <button className="btn" onClick={handleClear}>
             <Eraser size={16} />
             Clear
           </button>
         </div>
       </div>
 
-      <div className="col">
-        <label className="field">
-          <span>Output</span>
-
-          {err ? (
-            <div className="err" role="alert">
-              ⚠ {err}
-            </div>
-          ) : out ? (
-            <textarea readOnly rows={14} value={out} />
-          ) : (
-            <div className="empty">
-              Nothing here yet. Add some input and press a button.
-            </div>
-          )}
-        </label>
-
-        {out && (
-          <div className="row">
-            <button className="btn" onClick={copy}>
-              {ok ? <Check size={16} /> : <Copy size={16} />}
-              {ok ? 'Copied' : 'Copy'}
-            </button>
-
-            <button className="btn" onClick={save}>
-              <Download size={16} />
-              Download
-            </button>
-          </div>
-        )}
-      </div>
+      <OutputPanel
+        output={output}
+        error={error}
+        isCopied={isCopied}
+        onCopy={handleCopy}
+        onDownload={handleDownload}
+      />
     </div>
   )
 }
