@@ -95,7 +95,12 @@ function ToolkitGrid({ items }) {
           index={index}
           title={toolkit.name}
           description={toolkit.desc}
-          tags={toolkit.tools.map(tool => tool.name)}
+          tags={[
+            ...toolkit.tools.slice(0, 2).map(tool => tool.name),
+            ...(toolkit.tools.length > 2
+              ? [`+${toolkit.tools.length - 2} more`]
+              : [])
+          ]}
         />
       ))}
     </div>
